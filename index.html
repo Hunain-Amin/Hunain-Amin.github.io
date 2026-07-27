@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hunain Amin // Security Operations</title>
+<meta name="description" content="Hunain Amin — Cybersecurity student. Home lab: SIEM, network security, cloud infrastructure.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-void:#08090f;
+    --bg-panel:#0e111a;
+    --bg-panel-2:#131826;
+    --line:#1e2536;
+    --cyan:#00e5ff;
+    --magenta:#ff2fb0;
+    --green:#39ff88;
+    --amber:#ffb020;
+    --text:#e8edf7;
+    --text-dim:#7a879e;
+    --mono:'JetBrains Mono', monospace;
+    --sans:'Inter', sans-serif;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+
+  body{
+    background:var(--bg-void);
+    color:var(--text);
+    font-family:var(--sans);
+    line-height:1.6;
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* ambient scanline / grid texture */
+  body::before{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:
+      linear-gradient(rgba(0,229,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,255,0.035) 1px, transparent 1px);
+    background-size:42px 42px;
+    pointer-events:none;
+    z-index:0;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+  }
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 3px);
+    pointer-events:none;
+    z-index:1;
+    opacity:0.5;
+  }
+
+  a{color:inherit;text-decoration:none;}
+
+  .wrap{max-width:1040px;margin:0 auto;padding:0 28px;position:relative;z-index:2;}
+
+  ::selection{background:var(--magenta);color:#08090f;}
+
+  /* focus visibility */
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--cyan);
+    outline-offset:3px;
+  }
+
+  /* ---------- NAV ---------- */
+  nav{
+    position:sticky; top:0; z-index:50;
+    background:rgba(8,9,15,0.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .nav-inner{
+    max-width:1040px;margin:0 auto;padding:16px 28px;
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .nav-brand{
+    font-family:var(--mono);font-weight:700;letter-spacing:0.02em;
+    color:var(--text);font-size:0.95rem;
+    display:flex;align-items:center;gap:8px;
+  }
+  .nav-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+  .nav-links{display:flex;gap:28px;font-family:var(--mono);font-size:0.78rem;}
+  .nav-links a{color:var(--text-dim);transition:color 0.2s;position:relative;}
+  .nav-links a:hover{color:var(--cyan);}
+  .nav-links a::before{content:"./";color:var(--text-dim);opacity:0.5;}
+  @media (max-width:640px){.nav-links{display:none;}}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    min-height:88vh;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:80px 0 60px;
+    position:relative;
+  }
+  .terminal{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    box-shadow:0 0 0 1px rgba(0,229,255,0.05), 0 20px 60px -20px rgba(0,229,255,0.15);
+    overflow:hidden;
+    margin-bottom:40px;
+  }
+  .terminal-bar{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 14px;
+    background:var(--bg-panel-2);
+    border-bottom:1px solid var(--line);
+  }
+  .terminal-bar span{width:11px;height:11px;border-radius:50%;display:inline-block;}
+  .terminal-bar .r{background:#ff5f56;}
+  .terminal-bar .y{background:#ffbd2e;}
+  .terminal-bar .g{background:#27c93f;}
+  .terminal-bar .path{margin-left:12px;font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);}
+  .terminal-body{
+    padding:22px 24px 28px;
+    font-family:var(--mono);
+    font-size:0.92rem;
+    min-height:180px;
+  }
+  .term-line{color:var(--text-dim);margin-bottom:6px;}
+  .term-line .prompt{color:var(--green);}
+  .term-line .cmd{color:var(--text);}
+  #typed-out{color:var(--text);white-space:pre-wrap;}
+  .cursor{display:inline-block;width:8px;height:1.1em;background:var(--cyan);vertical-align:text-bottom;animation:blink 1s step-end infinite;margin-left:2px;}
+  @keyframes blink{50%{opacity:0;}}
+
+  .hero h1{
+    font-family:var(--mono);
+    font-size:clamp(2.1rem, 6vw, 3.6rem);
+    font-weight:800;
+    line-height:1.08;
+    letter-spacing:-0.01em;
+    margin-bottom:16px;
+  }
+  .hero h1 .accent{color:var(--cyan);text-shadow:0 0 18px rgba(0,229,255,0.5);}
+  .hero .role{
+    font-family:var(--mono);
+    color:var(--magenta);
+    font-size:0.95rem;
+    letter-spacing:0.06em;
+    margin-bottom:22px;
+    text-transform:uppercase;
+  }
+  .hero p.lede{
+    max-width:620px;
+    color:var(--text-dim);
+    font-size:1.05rem;
+    margin-bottom:30px;
+  }
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;}
+  .btn{
+    font-family:var(--mono);
+    font-size:0.82rem;
+    padding:12px 22px;
+    border-radius:4px;
+    border:1px solid var(--cyan);
+    color:var(--cyan);
+    transition:all 0.2s;
+    display:inline-flex;align-items:center;gap:8px;
+  }
+  .btn:hover{background:rgba(0,229,255,0.1);box-shadow:0 0 20px rgba(0,229,255,0.25);}
+  .btn.solid{background:var(--cyan);color:#06070c;font-weight:700;}
+  .btn.solid:hover{box-shadow:0 0 24px rgba(0,229,255,0.5);}
+
+  /* ---------- SECTION SHELL ---------- */
+  section{padding:90px 0;border-top:1px solid var(--line);position:relative;}
+  .eyebrow{
+    font-family:var(--mono);font-size:0.75rem;color:var(--green);
+    letter-spacing:0.12em;text-transform:uppercase;margin-bottom:10px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .eyebrow::before{content:"[";color:var(--text-dim);}
+  .eyebrow::after{content:"]";color:var(--text-dim);}
+  h2.sec-title{
+    font-family:var(--mono);font-size:clamp(1.5rem,3.5vw,2.1rem);
+    font-weight:700;margin-bottom:34px;
+  }
+
+  /* ---------- ABOUT ---------- */
+  .about-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:50px;}
+  @media (max-width:760px){.about-grid{grid-template-columns:1fr;}}
+  .about-grid p{color:var(--text-dim);margin-bottom:16px;font-size:1rem;}
+  .stat-card{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;
+    padding:20px;margin-bottom:14px;
+  }
+  .stat-card .k{font-family:var(--mono);color:var(--cyan);font-size:1.6rem;font-weight:800;}
+  .stat-card .v{font-family:var(--mono);color:var(--text-dim);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.06em;margin-top:4px;}
+
+  /* ---------- LIVE FEED (signature element) ---------- */
+  .feed-panel{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .feed-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 20px;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);
+  }
+  .feed-head .live{color:var(--green);display:flex;align-items:center;gap:6px;}
+  .feed-head .live .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 1.6s infinite;}
+  .feed-body{max-height:340px;overflow-y:auto;}
+  .feed-row{
+    display:flex;gap:14px;padding:13px 20px;
+    border-bottom:1px solid rgba(255,255,255,0.03);
+    font-family:var(--mono);font-size:0.82rem;
+    opacity:0;
+    animation:rowIn 0.5s ease forwards;
+  }
+  @keyframes rowIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+  .feed-row .ts{color:var(--text-dim);flex-shrink:0;width:66px;}
+  .feed-row .lvl{flex-shrink:0;width:64px;font-weight:700;}
+  .feed-row .lvl.info{color:var(--cyan);}
+  .feed-row .lvl.ok{color:var(--green);}
+  .feed-row .lvl.warn{color:var(--amber);}
+  .feed-row .msg{color:var(--text);}
+
+  /* ---------- PROJECTS ---------- */
+  .proj-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:760px){.proj-grid{grid-template-columns:1fr;}}
+  .proj-card{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;
+    padding:26px;position:relative;transition:border-color 0.25s, transform 0.25s;
+  }
+  .proj-card:hover{border-color:var(--magenta);transform:translateY(-3px);}
+  .proj-tag{
+    font-family:var(--mono);font-size:0.68rem;color:var(--magenta);
+    text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;
+    border:1px solid rgba(255,47,176,0.35);display:inline-block;padding:3px 8px;border-radius:3px;
+  }
+  .proj-card h3{font-family:var(--mono);font-size:1.15rem;margin-bottom:12px;}
+  .proj-card ul{list-style:none;color:var(--text-dim);font-size:0.92rem;}
+  .proj-card li{padding-left:18px;position:relative;margin-bottom:8px;}
+  .proj-card li::before{content:"›";position:absolute;left:0;color:var(--cyan);}
+  .proj-card .repo-link{
+    display:inline-flex;align-items:center;gap:6px;margin-top:16px;
+    font-family:var(--mono);font-size:0.78rem;color:var(--cyan);
+  }
+  .proj-card .repo-link:hover{text-decoration:underline;}
+
+  /* ---------- SKILLS (scan report) ---------- */
+  .scan-report{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;
+    padding:6px 0;
+  }
+  .scan-row{
+    display:grid;grid-template-columns:200px 1fr;gap:20px;
+    padding:16px 24px;border-bottom:1px solid rgba(255,255,255,0.03);
+    align-items:center;
+  }
+  .scan-row:last-child{border-bottom:none;}
+  .scan-row .cat{font-family:var(--mono);font-size:0.8rem;color:var(--green);text-transform:uppercase;letter-spacing:0.05em;}
+  .tag-list{display:flex;flex-wrap:wrap;gap:8px;}
+  .tag{
+    font-family:var(--mono);font-size:0.78rem;color:var(--text);
+    background:var(--bg-panel-2);border:1px solid var(--line);
+    padding:5px 11px;border-radius:4px;
+    transition:border-color 0.2s, color 0.2s;
+  }
+  .tag:hover{border-color:var(--cyan);color:var(--cyan);}
+  @media (max-width:640px){.scan-row{grid-template-columns:1fr;gap:8px;}}
+
+  /* ---------- EDU + CERTS ---------- */
+  .split-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px;}
+  @media (max-width:760px){.split-grid{grid-template-columns:1fr;}}
+  .info-card{
+    background:var(--bg-panel);border:1px solid var(--line);border-radius:8px;padding:26px;
+  }
+  .info-card .eyebrow{margin-bottom:16px;}
+  .info-card h3{font-family:var(--mono);font-size:1.05rem;margin-bottom:6px;}
+  .info-card .sub{color:var(--text-dim);font-size:0.9rem;margin-bottom:4px;}
+  .info-card .meta{font-family:var(--mono);color:var(--cyan);font-size:0.78rem;margin-top:10px;}
+  .cert-item{padding:14px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+  .cert-item:last-child{border-bottom:none;}
+  .cert-item h4{font-family:var(--mono);font-size:0.95rem;margin-bottom:3px;}
+  .cert-item span{color:var(--text-dim);font-size:0.85rem;}
+
+  /* ---------- CONTACT ---------- */
+  .contact{text-align:center;}
+  .contact .sec-title{margin-bottom:14px;}
+  .contact p{color:var(--text-dim);max-width:520px;margin:0 auto 34px;}
+  .contact-links{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+
+  footer{
+    padding:30px 0 50px;text-align:center;
+    font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);
+  }
+  footer .blink{color:var(--green);}
+
+  h2.sec-title .accent{color:var(--magenta);}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-brand"><span class="dot"></span> hunain@security:~$</div>
+    <div class="nav-links">
+      <a href="#about">about</a>
+      <a href="#feed">activity</a>
+      <a href="#projects">projects</a>
+      <a href="#skills">skills</a>
+      <a href="#education">education</a>
+      <a href="#contact">contact</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero" style="border-top:none;padding-top:60px;">
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="r"></span><span class="y"></span><span class="g"></span>
+        <span class="path">/home/hunain — whoami</span>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line"><span class="prompt">$</span> <span class="cmd">whoami</span></div>
+        <div id="typed-out"></div><span class="cursor"></span>
+      </div>
+    </div>
+
+    <div class="role">Cybersecurity Student &middot; Home Lab Operator</div>
+    <h1>Securing systems,<br>one <span class="accent">log line</span> at a time.</h1>
+    <p class="lede">BS Computer Science student (Class of 2027) building hands-on security operations skills through a self-managed home lab — SIEM monitoring, network segmentation, and cloud infrastructure hardening. Looking for a cybersecurity internship.</p>
+    <div class="hero-actions">
+      <a class="btn solid" href="mailto:p.hunainamin@gmail.com">$ contact --email</a>
+      <a class="btn" href="#projects">$ view --projects</a>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about">
+    <div class="eyebrow">01_summary</div>
+    <h2 class="sec-title">About</h2>
+    <div class="about-grid">
+      <div>
+        <p>I'm a Computer Science student at the University of Management and Technology, Lahore, focused on cybersecurity. Rather than waiting for a classroom to hand me infrastructure, I built my own: a home lab covering SIEM monitoring, network security, and cloud fundamentals.</p>
+        <p>I'm comfortable across operating systems, networking, and cloud computing, with hands-on exposure to tools like Wazuh, pfSense, and AWS — and I'm currently looking for a cybersecurity internship to put those skills to work on real security operations.</p>
+      </div>
+      <div>
+        <div class="stat-card"><div class="k">3</div><div class="v">SIEM &amp; network security tools deployed</div></div>
+        <div class="stat-card"><div class="k">6+</div><div class="v">VLANs designed in enterprise network sim</div></div>
+        <div class="stat-card"><div class="k">2027</div><div class="v">Expected graduation, BS Computer Science</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE FEED — signature element -->
+  <section id="feed">
+    <div class="eyebrow">02_activity</div>
+    <h2 class="sec-title">Home Lab <span class="accent">Log</span></h2>
+    <div class="feed-panel">
+      <div class="feed-head">
+        <span>wazuh-siem :: alerts.log</span>
+        <span class="live"><span class="dot"></span> monitoring</span>
+      </div>
+      <div class="feed-body" id="feed-body"></div>
+    </div>
+  </section>
+
+  <!-- PROJECTS -->
+  <section id="projects">
+    <div class="eyebrow">03_projects</div>
+    <h2 class="sec-title">Projects</h2>
+    <div class="proj-grid">
+      <div class="proj-card">
+        <span class="proj-tag">Systems / C++</span>
+        <h3>Mini Operating System</h3>
+        <ul>
+          <li>C++ OS simulator implementing process management, a CPU scheduler, and multithreaded synchronization.</li>
+          <li>Banker's Algorithm for deadlock avoidance, evaluating resource requests against safe-state conditions.</li>
+          <li>Producer-Consumer problem solved with mutex locks and semaphores to prevent race conditions.</li>
+        </ul>
+        <a class="repo-link" href="https://github.com/Hunain-Amin/hunain-amin-770-PROJECT-MINI_OS" target="_blank" rel="noopener">→ view repository</a>
+      </div>
+      <div class="proj-card">
+        <span class="proj-tag">Networking</span>
+        <h3>Enterprise IT Department Network</h3>
+        <ul>
+          <li>Multi-department enterprise network simulated in Cisco Packet Tracer — 6+ VLANs, 10–20 networked devices.</li>
+          <li>Static and dynamic routing (OSPF/RIP) for inter-VLAN and inter-department connectivity.</li>
+          <li>ACLs and port security to restrict cross-department access; DHCP for automated IP assignment.</li>
+        </ul>
+        <a class="repo-link" href="https://github.com/Hunain-Amin/Enterprise-IT-department-Network" target="_blank" rel="noopener">→ view repository</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- SKILLS -->
+  <section id="skills">
+    <div class="eyebrow">04_scan_report</div>
+    <h2 class="sec-title">Skills</h2>
+    <div class="scan-report">
+      <div class="scan-row">
+        <div class="cat">Security</div>
+        <div class="tag-list">
+          <span class="tag">Wazuh</span><span class="tag">pfSense</span><span class="tag">SIEM</span>
+          <span class="tag">ACLs</span><span class="tag">Port Security</span><span class="tag">Oracle VirtualBox</span>
+        </div>
+      </div>
+      <div class="scan-row">
+        <div class="cat">Networking</div>
+        <div class="tag-list">
+          <span class="tag">Cisco Packet Tracer</span><span class="tag">VLANs</span>
+          <span class="tag">OSPF / RIP Routing</span><span class="tag">DHCP</span>
+        </div>
+      </div>
+      <div class="scan-row">
+        <div class="cat">Cloud</div>
+        <div class="tag-list">
+          <span class="tag">AWS (EC2)</span><span class="tag">Hadoop</span>
+        </div>
+      </div>
+      <div class="scan-row">
+        <div class="cat">Languages</div>
+        <div class="tag-list">
+          <span class="tag">C++</span><span class="tag">C#</span><span class="tag">Python</span>
+          <span class="tag">Java</span><span class="tag">Dart</span><span class="tag">HTML</span>
+        </div>
+      </div>
+      <div class="scan-row">
+        <div class="cat">Frameworks</div>
+        <div class="tag-list">
+          <span class="tag">Flutter</span><span class="tag">MATLAB</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATION + CERTS -->
+  <section id="education">
+    <div class="eyebrow">05_credentials</div>
+    <h2 class="sec-title">Education &amp; Certifications</h2>
+    <div class="split-grid">
+      <div class="info-card">
+        <div class="eyebrow">education</div>
+        <h3>BS Computer Science</h3>
+        <div class="sub">University of Management and Technology (UMT), Lahore</div>
+        <div class="meta">Expected 2027</div>
+        <div class="meta" style="color:var(--text-dim);margin-top:12px;">Relevant coursework: Cloud Computing, Operating Systems, Computer Networks</div>
+      </div>
+      <div class="info-card">
+        <div class="eyebrow">certifications</div>
+        <div class="cert-item">
+          <h4>Mastercard Cybersecurity Virtual Experience Program</h4>
+          <span>Forage</span>
+        </div>
+        <div class="cert-item">
+          <h4>Introduction to Cybersecurity</h4>
+          <span>Cisco Networking Academy</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="contact">
+    <div class="eyebrow" style="justify-content:center;">06_connect</div>
+    <h2 class="sec-title">Let's talk security.</h2>
+    <p>Open to cybersecurity internships and opportunities in security operations. Reach out — I respond fast.</p>
+    <div class="contact-links">
+      <a class="btn solid" href="mailto:p.hunainamin@gmail.com">$ email</a>
+      <a class="btn" href="tel:03077444911">$ call</a>
+      <a class="btn" href="https://github.com/Hunain-Amin" target="_blank" rel="noopener">$ github</a>
+      <a class="btn" href="#" target="_blank" rel="noopener">$ linkedin</a>
+    </div>
+  </section>
+
+  <footer>
+    <span class="blink">●</span> connection secure &mdash; built by Hunain Amin &mdash; <span id="year"></span>
+  </footer>
+
+</div>
+
+<script>
+  // typing effect for hero terminal
+  const outputText = `HUNAIN AMIN
+BS Computer Science student — cybersecurity focus
+Home lab: SIEM monitoring | network security | cloud infra
+Status: seeking cybersecurity internship`;
+
+  const typedEl = document.getElementById('typed-out');
+  let i = 0;
+  function typeChar(){
+    if(i <= outputText.length){
+      typedEl.textContent = outputText.slice(0, i);
+      i++;
+      setTimeout(typeChar, 14);
+    }
+  }
+  typeChar();
+
+  // live feed log lines, built from real home-lab + project content
+  const logLines = [
+    {ts:'00:00:01', lvl:'info', msg:'Deployed AWS EC2 instance (Ubuntu Server) — SSH hardened, security groups configured.'},
+    {ts:'00:00:04', lvl:'ok',   msg:'Wazuh SIEM online — centralized log collection + file integrity monitoring active.'},
+    {ts:'00:00:07', lvl:'info', msg:'Custom detection rules written for suspicious activity patterns.'},
+    {ts:'00:00:11', lvl:'ok',   msg:'pfSense virtual firewall configured — network segmentation enforced.'},
+    {ts:'00:00:14', lvl:'warn', msg:'Simulated attack behavior detected by custom alert rule — logged for review.'},
+    {ts:'00:00:18', lvl:'info', msg:'Traffic filtering + access control policies applied across lab segments.'},
+    {ts:'00:00:22', lvl:'ok',   msg:'System log analysis pass complete — no unresolved anomalies.'},
+    {ts:'00:00:26', lvl:'info', msg:'Enterprise network sim: 6+ VLANs, OSPF/RIP routing verified.'},
+  ];
+
+  const feedBody = document.getElementById('feed-body');
+  logLines.forEach((line, idx) => {
+    const row = document.createElement('div');
+    row.className = 'feed-row';
+    row.style.animationDelay = (idx * 0.12) + 's';
+    row.innerHTML = `<span class="ts">${line.ts}</span><span class="lvl ${line.lvl}">${line.lvl.toUpperCase()}</span><span class="msg">${line.msg}</span>`;
+    feedBody.appendChild(row);
+  });
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
