@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hunain Amin // Security Operations</title>
-<meta name="description" content="Hunain Amin — Cybersecurity student. Home lab: SIEM, network security, cloud infrastructure.">
+<meta name="description" content="Hunain Amin — Cybersecurity student. Home lab: SIEM, honeypot, network security, cloud infrastructure.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -254,6 +254,12 @@
     font-family:var(--mono);font-size:0.78rem;color:var(--cyan);
   }
   .proj-card .repo-link:hover{text-decoration:underline;}
+  .proj-card.featured{grid-column:1 / -1;}
+  .proj-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0 6px;}
+  .proj-metrics .m{background:var(--bg-panel-2);border:1px solid var(--line);border-radius:6px;padding:14px 16px;}
+  .proj-metrics .k{font-family:var(--mono);color:var(--cyan);font-size:1.35rem;font-weight:800;}
+  .proj-metrics .v{font-family:var(--mono);color:var(--text-dim);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;margin-top:2px;}
+  @media (max-width:760px){.proj-metrics{grid-template-columns:1fr 1fr;}}
 
   /* ---------- SKILLS (scan report) ---------- */
   .scan-report{
@@ -382,6 +388,22 @@
     <div class="eyebrow">03_projects</div>
     <h2 class="sec-title">Projects</h2>
     <div class="proj-grid">
+      <div class="proj-card featured">
+        <span class="proj-tag">Cloud / SIEM / Detection</span>
+        <h3>Internet-Facing SSH Honeypot on AWS, Monitored by Wazuh</h3>
+        <ul>
+          <li>Ran a Cowrie SSH honeypot on a free-tier AWS EC2 instance for 7 weeks, with its logs analyzed in a Wazuh SIEM at home.</li>
+          <li>Built a reverse SSH tunnel (systemd service) to ship logs home without opening any ports on my network.</li>
+          <li>Wrote custom Wazuh detection rules for connections, logins and commands, tagged with MITRE ATT&amp;CK (T1595, T1110, T1059).</li>
+        </ul>
+        <div class="proj-metrics">
+          <div class="m"><div class="k">~427K</div><div class="v">events logged in 7 weeks</div></div>
+          <div class="m"><div class="k">~53K</div><div class="v">login events captured</div></div>
+          <div class="m"><div class="k">~95%</div><div class="v">of traffic from just 3 IPs</div></div>
+          <div class="m"><div class="k">5</div><div class="v">custom rules, MITRE-tagged</div></div>
+        </div>
+        <a class="repo-link" href="https://github.com/Hunain-Amin/cowrie-wazuh-honeypot" target="_blank" rel="noopener">→ view repository</a>
+      </div>
       <div class="proj-card">
         <span class="proj-tag">Systems / C++</span>
         <h3>Mini Operating System</h3>
@@ -415,13 +437,14 @@
         <div class="tag-list">
           <span class="tag">Wazuh</span><span class="tag">pfSense</span><span class="tag">SIEM</span>
           <span class="tag">ACLs</span><span class="tag">Port Security</span><span class="tag">Oracle VirtualBox</span>
+          <span class="tag">Cowrie Honeypot</span><span class="tag">MITRE ATT&amp;CK</span>
         </div>
       </div>
       <div class="scan-row">
         <div class="cat">Networking</div>
         <div class="tag-list">
           <span class="tag">Cisco Packet Tracer</span><span class="tag">VLANs</span>
-          <span class="tag">OSPF / RIP Routing</span><span class="tag">DHCP</span>
+          <span class="tag">OSPF / RIP Routing</span><span class="tag">DHCP</span><span class="tag">SSH Tunneling</span>
         </div>
       </div>
       <div class="scan-row">
@@ -519,6 +542,8 @@ Status: seeking cybersecurity internship`;
     {ts:'00:00:18', lvl:'info', msg:'Traffic filtering + access control policies applied across lab segments.'},
     {ts:'00:00:22', lvl:'ok',   msg:'System log analysis pass complete — no unresolved anomalies.'},
     {ts:'00:00:26', lvl:'info', msg:'Enterprise network sim: 6+ VLANs, OSPF/RIP routing verified.'},
+    {ts:'00:00:30', lvl:'info', msg:'Cowrie honeypot exposed on :2222 (AWS EC2) — logs shipped to Wazuh through a reverse SSH tunnel.'},
+    {ts:'00:00:34', lvl:'warn', msg:'Honeypot, 7 weeks: ~427K events, ~53K logins — 3 source IPs produced ~95% of traffic. Rules tagged with MITRE ATT&CK.'},
   ];
 
   const feedBody = document.getElementById('feed-body');
